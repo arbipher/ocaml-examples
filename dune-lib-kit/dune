@@ -1,0 +1,9 @@
+(library
+ (name lib)
+;  (public_name phoenix_lib.lib)
+;  (wrapped false)
+ (synopsis "the library demo")
+ (inline_tests)
+ ;  (preprocess (staged_pps ppx_import ppx_inline_test))
+ (preprocess
+  (pps ppx_expect)))
