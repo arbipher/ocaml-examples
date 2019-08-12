@@ -1,0 +1,6 @@
+(library
+ (name print_and_format)
+ (synopsis "print_and_format demo")
+ (libraries ppx_show.runtime)
+ (inline_tests)
+ (preprocess (staged_pps ppx_import ppx_expect ppx_show)))
