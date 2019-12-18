@@ -333,13 +333,16 @@ let p2 = Plus (Int 3, Int 4)
 let p3 = Let ("x", p2, Plus (Var "x", Int 6))
 
 let p4 = 
-  Let ("add_one", Fun ("x", Plus (Var "x", Int 1)),
+  Let ("add_one", 
+    Fun ("x", Plus (Var "x", Int 1)),
   App (Var "add_one", Int 1)
 )
 
 let p5 = 
-  Let ("apply", Fun ("f", Fun ("x", App (Var "f", Var "x"))),
-  Let ("add_one", Fun ("x", Plus (Var "x", Int 1)),
+  Let ("apply", 
+    Fun ("f", Fun ("x", App (Var "f", Var "x"))),
+  Let ("add_one", 
+    Fun ("x", Plus (Var "x", Int 1)),
   App ((App (Var "apply", Var "add_one")), Int 1)
 ))
 
@@ -347,21 +350,26 @@ let p6 = Plus (Plus (Int 1, Int 2), Plus (Int 3, Int 4))
 
 let p7 = 
   Let ("t", Int 1,
-  Let ("d", Fun ("x", Var "t"),
+  Let ("d", 
+    Fun ("x", Var "t"),
   App (Var "d", Int 2)))
 
 let p8 = 
   Let ("t", Int 1,
-  Let ("d", Fun ("x", Fun ("y", Var "t")),
+  Let ("d", 
+    Fun ("x", Fun ("y", Var "t")),
   App ((App (Var "d", Int 1)), Int 2)))
 
 let p9 = 
-  Let ("add", Fun ("x", Fun ("y", Plus (Var "x", Var "y"))),
+  Let ("add", 
+    Fun ("x", Fun ("y", Plus (Var "x", Var "y"))),
   App ((App (Var "add", Int 1)), Int 2))
 
 let p10 =
-  Let ("add3", Fun ("x1", Fun ("x2", Fun ("x3", Plus (Var "x1", Plus (Var "x2", Var "x3"))))),
-  App (App ((App (Var "add3", Int 1)), Int 2), Int 3))
+  Let ("add3", 
+    Fun ("x1", Fun ("x2", Fun ("x3", 
+      Plus (Var "x1", Plus (Var "x2", Var "x3"))))),
+  App (App ((App (Var "add3", Int 1)), Int 2), Int 3))  
 
 let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10]
 
