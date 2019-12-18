@@ -1,3 +1,5 @@
+#require "ppx_show.runtime";;
+
 type id = string
 
 module Toy = struct
@@ -6,8 +8,8 @@ module Toy = struct
     | Var of id
     | Fun of id * exp
     | Plus of exp * exp
-    | Let of id * exp * exp
     | App of exp * exp
+    | Let of id * exp * exp
 
   let rec subst e id et =
     match e with
@@ -49,7 +51,25 @@ module Toy = struct
   | _ -> failwith "Toy.int_of: not int"
 end
 
-module Anf = struct
+module Anf : (
+  sig 
+    type exp =
+      | Let of id * clause * exp
+      | BottomVar of id
+    and clause = 
+      | Value of value
+      | Plus of id * id
+      | Alias of id
+      | App of id * id
+    and value =
+      | Int of int
+      | Fun of id * exp
+    [@@deriving show] 
+
+    val eval : exp -> value
+    val int_of : value -> int
+  end
+) = struct
   type exp =
     | Let of id * clause * exp
     | BottomVar of id
@@ -61,6 +81,7 @@ module Anf = struct
   and value =
     | Int of int
     | Fun of id * exp
+    [@@deriving show]
 
   let rec subst env e =
     if List.length env = 0 then
@@ -79,7 +100,7 @@ module Anf = struct
     )
     | rest -> rest
     
-  let rec aeval env e : value =
+  let rec aeval env e =
     match e with
     | Let (id, c, e) -> (
         let v = 
@@ -93,10 +114,8 @@ module Anf = struct
               | Int i1, Int i2 -> Int (i1 + i2)
               | _ -> failwith "plus on non Ints 2"
             )
-          | Alias aid -> (
-            let env' = (id, List.assoc aid env)::env in
-            aeval env' e
-          )
+          | Alias id ->
+            List.assoc id env
           | App (id1, id2) -> (
               let v1 = List.assoc id1 env in
               match v1 with
@@ -120,7 +139,26 @@ module Anf = struct
   | _ -> failwith "Anf.int_of: not int"
 end
 
-module Inverse_anf = struct
+module Inverse_anf : (
+  sig 
+    type exp =
+      | Top
+      | BottomVar of id * exp
+      | InvLet of id * clause * exp
+    and clause =
+      | Value of value
+      | Plus of id * id
+      | Alias of id
+      | App of id * id
+    and value =
+      | Int of int
+      | Fun of id * exp
+    [@@deriving show] 
+
+    val eval : exp -> value
+    val int_of : value -> int
+  end
+)  = struct
   type exp =
     | Top
     | BottomVar of id * exp
@@ -133,64 +171,49 @@ module Inverse_anf = struct
   and value =
     | Int of int
     | Fun of id * exp
-    | Empty (* exception for Non_Found *)
+  [@@deriving show {with_path = false}] 
 
-  let rec inverse_exp ctx e =
-    match e with
-    | Anf.BottomVar id -> 
-        BottomVar (id, ctx)
-    | Anf.Let (id, c, e) ->
-        let ctx' = InvLet (id, inverse_clause c, ctx) in
-        inverse_exp ctx' e
-  and inv e = inverse_exp Top e
-  and inverse_clause c =
-    match c with
-    | Anf.Value (Int i) -> Value (Int i)
-    | Anf.Value (Fun (id, e)) -> Value (Fun (id, inv e))
-    | Anf.Plus (id1, id2) -> Plus (id1, id2)
-    | Anf.Alias id -> Alias id
-    | Anf.App (id1, id2) -> App (id1, id2)
-
-  let rec inv_eval e =
-    let rec eval id e =
-      match e with
-      | Top -> Empty
-      | BottomVar (x, e) -> eval x e
+  let rec inv_eval e ctx =
+    let rec search id ew ctx =
+      (* Printf.printf "search %s at \n%s guarded \n%s"
+        id (show_exp ew) (show_exp ctx); *)
+      match ew with
+      | Top -> 
+        search id ctx ctx
       | InvLet (x, c, e) -> (
         if id = x then (
           match c with
-          | Value (Int i) -> Int i
-          | Value (Fun (x, e)) -> Fun (x, e)
-          | Value Empty -> failwith "inv_eval: Empty is returned only"
+          | Value (Int i) -> Int i, Top
+          | Value (Fun (x, e)) -> Fun (x, e), ctx
           | Plus (id1, id2) -> (
-            match eval id1 e, eval id2 e with
-            | Int i1, Int i2 -> Int (i1 + i2)
+            match search id1 e ctx, search id2 e ctx with
+            | (Int i1, _), (Int i2, _) -> Int (i1 + i2), Top
             | _ -> failwith "inv_eval: plus on non ints "
           ) 
           | App (id1, id2) -> (
-            match eval id1 e with
-            | Fun (x, e) -> (
-              let v2 = eval id2 e in
-              let e' = InvLet (x, Value v2, e) in
-              inv_eval e'
+            match search id1 e ctx with
+            | Fun (x, e), ctx_f -> (
+              let v2, _ = search id2 ew ctx in
+              let ctx_body = InvLet (x, Value v2, ctx_f) in
+              inv_eval e ctx_body
             )
             | _ -> failwith "inv_eval: app on non fun"
           )
-          | Alias a -> (
-            let v = eval a e in
-            if v <> Empty then
-              v
-            else
-              eval id e
-          ) 
+          | Alias a -> search a e ctx
         ) else
-          eval id e
-      ) in
+          search id e ctx
+      )
+      | BottomVar (x, e) -> 
+        search id e ctx
+        (* failwith "inv_eval: BottomVar" *)
+      in
     match e with
-    | BottomVar (x, e) -> eval x e
+    | BottomVar (x, e) -> search x e ctx
     | _ -> failwith "inv_eval: need a BottomVar"
 
-  let eval = inv_eval
+  let eval e = 
+    let v, _ctx = inv_eval e e in 
+    v
 
   let int_of = function
     | Int i -> i
@@ -226,6 +249,22 @@ module Convertor = struct
     | _ -> failwith "any_of_list: never here"
 
   let rec anf_of_toy (e : Toy.exp) : Anf.exp =
+    let merge e1 e2 kon =
+      let v1 = anf_of_toy e1
+      and v2 = anf_of_toy e2 in
+      let el1, b1 = linearize [] v1
+      and el2, b2 = linearize [] v2 in
+      let x = new_id () in
+      let ek = kon b1 b2 x in
+      anf_of_list (el1 @ el2 @ [ek]) x 
+    in
+    let merge_let e1 e2 x =
+      let v1 = anf_of_toy e1
+      and v2 = anf_of_toy e2 in
+      let el1, b1 = linearize [] v1
+      and el2, b2 = linearize [] v2 in
+      anf_of_list (el1 @ [Anf.Let (x, Anf.Alias b1, hole)] @el2) b2
+    in
     let open Anf in
     match e with
     | Toy.Int i -> (
@@ -233,26 +272,42 @@ module Convertor = struct
       Let (x, Value (Int i), BottomVar x)
     )
     | Toy.Var x -> (
-      let x = new_id () in
-      Let (x, Alias x, BottomVar x)
+      let xn = new_id () in
+      Let (xn, Alias x, BottomVar xn)
     )
     | Toy.Fun (xa, e) -> (
       let x = new_id () in
-      Let (x, Value (Fun (x, anf_of_toy e)), BottomVar x)
+      Let (x, Value (Fun (xa, anf_of_toy e)), BottomVar x)
     )
     | Toy.Plus (e1, e2) -> (
-      let v1 = anf_of_toy e1
-      and v2 = anf_of_toy e2 in
-      let el1, b1 = linearize [] v1
-      and el2, b2 = linearize [] v2 in
-      let x = new_id () in
-      let e_plus = Let (x, Plus (b1, b2), hole) in
-      anf_of_list (el1 @ el2 @ [e_plus]) x
+      let kon b1 b2 x = Let (x, Plus (b1, b2), hole) in
+      merge e1 e2 kon
     )
-    | _ -> failwith "hehe"
+    | Toy.App (e1, e2) -> (
+      let kon b1 b2 x = Let (x, App (b1, b2), hole) in
+      merge e1 e2 kon
+    )
+    | Toy.Let (x, e1, e2) -> (
+      merge_let e1 e2 x
+    )
 
-  let rec inv_of_anf (e : Anf.exp) : Inverse_anf.exp =
-    Inverse_anf.Top
+
+  let rec inverse_exp ctx e =
+    let open Inverse_anf in
+    match e with
+    | Anf.BottomVar id -> 
+        BottomVar (id, ctx)
+    | Anf.Let (id, c, e) ->
+        let ctx' = InvLet (id, inverse_clause c, ctx) in
+        inverse_exp ctx' e
+  and inv_of_anf e = inverse_exp Top e
+  and inverse_clause c =
+    match c with
+    | Anf.Value (Int i) -> Value (Int i)
+    | Anf.Value (Fun (id, e)) -> Value (Fun (id, inv_of_anf e))
+    | Anf.Plus (id1, id2) -> Plus (id1, id2)
+    | Anf.Alias id -> Alias id
+    | Anf.App (id1, id2) -> App (id1, id2)
 
   let test (pt : Toy.exp) =
     let pa = anf_of_toy pt in
@@ -290,93 +345,27 @@ let p5 =
 
 let p6 = Plus (Plus (Int 1, Int 2), Plus (Int 3, Int 4))
 
-let ps = [p1; p2; p3; p4; p5; p6]
+let p7 = 
+  Let ("t", Int 1,
+  Let ("d", Fun ("x", Var "t"),
+  App (Var "d", Int 2)))
+
+let p8 = 
+  Let ("t", Int 1,
+  Let ("d", Fun ("x", Fun ("y", Var "t")),
+  App ((App (Var "d", Int 1)), Int 2)))
+
+let p9 = 
+  Let ("add", Fun ("x", Fun ("y", Plus (Var "x", Var "y"))),
+  App ((App (Var "add", Int 1)), Int 2))
+
+let p10 =
+  Let ("add3", Fun ("x1", Fun ("x2", Fun ("x3", Plus (Var "x1", Plus (Var "x2", Var "x3"))))),
+  App (App ((App (Var "add3", Int 1)), Int 2), Int 3))
+
+let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10]
+
+let ieval p = p |> anf_of_toy |> inv_of_anf |> Inverse_anf.eval
 
 ;;
 List.iter test ps;;
-
-(* letize p6;; *)
-
-(* anf_of_toy @@ Int 3;; *)
-
-  (* type inverse_exp =
-    | End (* top *)
-    | Answer of int (* special for answer *)
-    | IVar of id * inverse_exp (* end *)
-    | IInt of id * int * inverse_exp
-    | IPlus of id * id * id * inverse_exp
-
-  let ieval e =
-    let rec eval id e = 
-      match e with
-      | IInt (idi, i, ie) -> 
-        if idi = id then 
-          Answer i 
-        else
-          eval id ie
-      | IPlus (idi, id1, id2, ie) ->
-        if idi = id then
-          let v1 = eval id1 ie
-          and v2 = eval id2 ie in
-          match v1, v2 with
-          | Answer i1, Answer i2 -> Answer (i1 + i2)
-          | _ -> failwith "ieval: not Answer"
-        else
-          eval id ie
-      | IVar _ -> failwith "ieval: IVar"
-      | End -> failwith "ieval: End"
-      | Answer i -> failwith "ieval: not Answer in ieval"
-    in
-    match e with
-    | IVar (id, ie) -> eval id ie
-    | _ -> failwith "not valid anf" *)
-(* 
-open Exp;;
-eval (Let ("x", Int 1, Plus (Var "x", Int 2)));;
-
-open Anf;;
-
-let p1 = 
-  (Let ("x", (Value (Int 1)),
-    (Let ("y", (Value (Int 2)),
-      (Let ("z", (Plus ("x", "y")),
-        (BottomVar "z")
-      ))
-    ))
-  ))
-
-;;
-ainterp p1;;
-
-let p2 = 
-  (Let ("one", (Value
-    (Int 1)),
-  (Let ("add1", (Value 
-    (Fun ("x", 
-      (Let ("xa1", (Plus ("x", "one")), 
-        BottomVar "xa1"
-    ))))),
-  (Let ("two", (Value 
-    (Int 2)),
-  (Let ("z", (App ("add1", "two")),
-  BottomVar "z"
-  ))
-  ))
-  ))
-  ))
-
-;;
-ainterp p2;;
-
-
-open Inverse_anf;;
-
-let check p =
-  let v1 = eval p in
-  let v2 = p |> inv |> ieval in
-  match v1, v2 with
-  | Int i1, Answer i2 when i1 = i2 -> i2
-  | _ -> -1
-
-;;
-check p;; *)
