@@ -3,10 +3,10 @@ type id = string
 module Toy = struct
   type exp =
     | Int of int
-    | Plus of exp * exp
     | Var of id
-    | Let of id * exp * exp
     | Fun of id * exp
+    | Plus of exp * exp
+    | Let of id * exp * exp
     | App of exp * exp
 
   let rec subst e id et =
@@ -207,94 +207,54 @@ module Convertor = struct
   let new_id () : string =
     "x-" ^ (string_of_int (get_counter ()))
 
-(* 
-  let rec linearize (e : Toy.exp) : Toy.exp =
-    let hole = Var "_" in
-    let last_id el =
-      match List.hd el with
-      | Let (x, _, _) -> x
-      | Var x -> x
-      | _ -> failwith "last_id"
-    in
+  let hole = Anf.BottomVar "__"
+
+  let rec linearize acc e =
+    let open Anf in
     match e with
-    | Int i -> Let (new_id ()), Int i, hole)]
-    | Var id -> [Var id]
-    | Fun (id, e) -> [Let (new_id ()), Fun (id, linearize e), hole)]
-    | Plus (e1, e2) -> (
-      let v1, v2 = linearize e1, linearize e2 in
-      let x1, x2 = last_id v1, last_id v2 in
-      let eplus = [
-        Let (new_id (), Plus (Var x1, Var x2), hole)
-      ]
-    )
+    | Let (id, c, e2) -> 
+      let acc' = (Let (id, c, hole)) :: acc in
+      linearize acc' e2
+    | BottomVar x -> 
+      (List.rev acc), x
 
-  let rec letize (e : Toy.exp) : Toy.exp = 
-    let rec replace_last e k =
-      match e with
-      | Var x -> x, k
-      | Let (x, e1, Var x1) -> x1, Let (x, e1, k)
-      | Let (x, e1, e2) -> (
-        let xk, xe = replace_last e2 k in
-        xk, Let (x, e1, xe)
-      ) 
-      | _ -> failwith "replace_last"
-    in
-    let open Toy in
-      match e with
-      | Int i -> (
-        let x = new_id () in
-        Let (x, Int i, Var x)
-      )
-      | Fun (id, e) -> (
-        let x = new_id () in
-        Let (x, Fun (id, letize e), Var x)
-      )
-      | Var x -> Var x
-      | Plus (e1, e2) -> (
-        let v1, v2 = letize e1, letize e2 in
-        let v1x, v1' = replace_last v1 v2 in
-        let v2x, 
-      )
+  let rec anf_of_list el b =
+    let open Anf in
+    match el with
+    | (Let (id, c, e)) :: es -> Let (id, c, (anf_of_list es b))
+    | [] -> BottomVar b
+    | _ -> failwith "any_of_list: never here"
 
-  let rec letize (e : Toy.exp) : Toy.exp = 
-    let open Toy in
-      match e with
-      | Int i -> Int i
-      | Fun (id, e) -> Fun (id, letize e)
-      | Var x -> Var x
-      | Plus (e1, e2) -> (
-        let e1' = letize e1 
-        and e2' = letize e2 in
-          match e1', e2' with
-          | Int i1, Int i2 -> (
-            let x1, x2, x3 = new_id (), new_id (), new_id () in
-            Let (x1, e1', 
-            Let (x2, e2', 
-            Let (x3, Plus (Var x1, Var x2), 
-            (Var x3)))))
-          | _ -> failwith "hehe"
-      )
-      | Let (id, e1, e2) -> Let (id, letize e1, letize e2)
-      | App (e1, e2) -> (
-        let e1' = letize e1 
-        and e2' = letize e2 in
-        let x1, x2, x3 = new_id (), new_id (), new_id () in
-        Let (x1, e1', 
-        Let (x2, e2', 
-        Let (x3, App (Var x1, Var x2),
-        (Var x3))))
-      ) *)
-
-  let anf_of_toy (e : Toy.exp) : Anf.exp =
+  let rec anf_of_toy (e : Toy.exp) : Anf.exp =
+    let open Anf in
     match e with
     | Toy.Int i -> (
-      let x = new_
+      let x = new_id () in
+      Let (x, Value (Int i), BottomVar x)
     )
+    | Toy.Var x -> (
+      let x = new_id () in
+      Let (x, Alias x, BottomVar x)
+    )
+    | Toy.Fun (xa, e) -> (
+      let x = new_id () in
+      Let (x, Value (Fun (x, anf_of_toy e)), BottomVar x)
+    )
+    | Toy.Plus (e1, e2) -> (
+      let v1 = anf_of_toy e1
+      and v2 = anf_of_toy e2 in
+      let el1, b1 = linearize [] v1
+      and el2, b2 = linearize [] v2 in
+      let x = new_id () in
+      let e_plus = Let (x, Plus (b1, b2), hole) in
+      anf_of_list (el1 @ el2 @ [e_plus]) x
+    )
+    | _ -> failwith "hehe"
 
   let rec inv_of_anf (e : Anf.exp) : Inverse_anf.exp =
     Inverse_anf.Top
 
-  let test (pt : Toy.exp) : Inverse_anf.exp =
+  let test (pt : Toy.exp) =
     let pa = anf_of_toy pt in
     let pi = inv_of_anf pa in
     let it = pt |> Toy.eval |> Toy.int_of in
@@ -303,7 +263,7 @@ module Convertor = struct
     begin
       assert (it = ia);
       assert (ia = ii);
-      pi
+      ()
     end
 end
 
@@ -333,10 +293,9 @@ let p6 = Plus (Plus (Int 1, Int 2), Plus (Int 3, Int 4))
 let ps = [p1; p2; p3; p4; p5; p6]
 
 ;;
-List.iter (fun p -> assert (eval p = eval (letize p))) ps;;
+List.iter test ps;;
 
-;;
-letize p6;;
+(* letize p6;; *)
 
 (* anf_of_toy @@ Int 3;; *)
 
