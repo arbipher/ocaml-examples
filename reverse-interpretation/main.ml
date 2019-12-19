@@ -369,7 +369,7 @@ let p10 =
   Let ("add3", 
     Fun ("x1", Fun ("x2", Fun ("x3", 
       Plus (Var "x1", Plus (Var "x2", Var "x3"))))),
-  App (App ((App (Var "add3", Int 1)), Int 2), Int 3))  
+  App (App ((App (Var "add3", Int 1)), Int 2), Int 3))
 
 let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10]
 
@@ -377,3 +377,6 @@ let ieval p = p |> anf_of_toy |> inv_of_anf |> Inverse_anf.eval
 
 ;;
 List.iter test ps;;
+
+
+#require "angstrom";;
