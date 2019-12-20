@@ -169,6 +169,7 @@ module Inverse_anf : (
     and value =
       | Int of int
       | Fun of id * exp
+      | Lazi of value lazy_t
     [@@deriving show] 
 
     val eval : exp -> value
@@ -187,6 +188,7 @@ module Inverse_anf : (
   and value =
     | Int of int
     | Fun of id * exp
+    | Lazi of value lazy_t
   [@@deriving show {with_path = false}] 
 
   let rec inv_eval e src =
@@ -203,6 +205,7 @@ module Inverse_anf : (
         if id = x then (
           match c with
           | Value (Int i) -> Int i, Top
+          | Value (Lazi v) -> (Lazy.force_val v), Top
           | Plus (id1, id2) -> (
             match search id1 e src, search id2 e src with
             | (Int i1, _), (Int i2, _) -> Int (i1 + i2), Top
@@ -212,15 +215,10 @@ module Inverse_anf : (
           | App (id1, id2) -> (
             match search id1 e src with
             | Fun (x, e), src_f -> (
-              let v2, _ = search id2 ew src in
-              (* let ctx_body = ctx_f in *)
-              let src_app = InvLet (x, Value v2, src_f) in
-              (* let ctx_body = 
-                InvLet (id1, Value (Fun (x, e)),
-                  InvLet (x, Value v2, ctx_f)) in *)
-              (* inv_eval e ctx_body *)
-              match inv_eval e src_app with
-              | Fun (xa, ea), _ -> Fun (xa, ea), src_app
+              let v2 = lazy (let v2, _ = search id2 ew src in v2) in
+              let src_fbody = InvLet (x, Value (Lazi v2), src_f) in
+              match inv_eval e src_fbody with
+              | Fun (xa, ea), _ -> Fun (xa, ea), src_fbody
               | rest -> rest
             )
             | _ -> failwith "inv_eval: app on non fun"
@@ -238,7 +236,7 @@ module Inverse_anf : (
     | _ -> failwith "inv_eval: need a BottomVar"
 
   let eval e = 
-    let v, _ctx = inv_eval e e in 
+    let v, _ctx = inv_eval e Top in 
     v
 
   let int_of = function
@@ -402,6 +400,12 @@ let p11 =
     Let ("f", Fun ("x", Var "p"), 
       Let ("p", Int 2, 
         App (Var "f", Int 1))));;
+
+let p12 = 
+  Let ("p", Int 1, 
+    Let ("f", Fun ("x", Var "p"), 
+      Let ("p", Int 2, 
+        App (Var "f", Var "_"))));;
 
 let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10; p11]
 
