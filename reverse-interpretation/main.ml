@@ -11,6 +11,9 @@ module Toy = struct
     | App of exp * exp
     | Let of id * exp * exp
 
+    (* | Bool of bool
+    | Eq of exp * exp *)
+
   let rec subst e id et =
     match e with
     | Int i -> Int i
@@ -19,6 +22,9 @@ module Toy = struct
     | Let (lid, e1, e2) -> Let (lid, subst e1 id et, if lid = id then e2 else subst e2 id et)
     | Fun (aid, ebody) -> Fun (aid, if aid = id then ebody else subst ebody id et)
     | App (e1, e2) -> App (subst e1 id et, subst e2 id et)
+
+    (* | Bool b -> Bool b
+    | Eq (e1, e2) -> Eq (subst e1 id et, subst e2 id et) *)
 
   let rec eval e =
     match e with
@@ -45,6 +51,16 @@ module Toy = struct
       )
       | _ -> failwith "eval: e1 not eval to Fun"
     )
+
+    (* | Bool b -> Bool b
+    | Eq (e1, e2) -> (
+      let v1 = eval e1 in
+      let v2 = eval e2 in
+      match v1, v2 with
+      | Int i1, Int i2 -> Bool (i1 = i2)
+      | _ -> failwith "eq on non ints 1" 
+        )
+*)
 
   let int_of = function
   | Int i -> i
@@ -173,42 +189,52 @@ module Inverse_anf : (
     | Fun of id * exp
   [@@deriving show {with_path = false}] 
 
-  let rec inv_eval e ctx =
-    let rec search id ew ctx =
+  let rec inv_eval e src =
+    let rec search id ew src =
       (* Printf.printf "search %s at \n%s guarded \n%s"
         id (show_exp ew) (show_exp ctx); *)
       match ew with
       | Top -> 
-        search id ctx ctx
+        if src <> Top then
+          search id src Top
+        else
+          failwith ("search: undefined " ^ id)
       | InvLet (x, c, e) -> (
         if id = x then (
           match c with
           | Value (Int i) -> Int i, Top
-          | Value (Fun (x, e)) -> Fun (x, e), ctx
           | Plus (id1, id2) -> (
-            match search id1 e ctx, search id2 e ctx with
+            match search id1 e src, search id2 e src with
             | (Int i1, _), (Int i2, _) -> Int (i1 + i2), Top
             | _ -> failwith "inv_eval: plus on non ints "
           ) 
+          | Value (Fun (x, ef)) -> Fun (x, ef), e
           | App (id1, id2) -> (
-            match search id1 e ctx with
-            | Fun (x, e), ctx_f -> (
-              let v2, _ = search id2 ew ctx in
-              let ctx_body = InvLet (x, Value v2, ctx_f) in
-              inv_eval e ctx_body
+            match search id1 e src with
+            | Fun (x, e), src_f -> (
+              let v2, _ = search id2 ew src in
+              (* let ctx_body = ctx_f in *)
+              let src_app = InvLet (x, Value v2, src_f) in
+              (* let ctx_body = 
+                InvLet (id1, Value (Fun (x, e)),
+                  InvLet (x, Value v2, ctx_f)) in *)
+              (* inv_eval e ctx_body *)
+              match inv_eval e src_app with
+              | Fun (xa, ea), _ -> Fun (xa, ea), src_app
+              | rest -> rest
             )
             | _ -> failwith "inv_eval: app on non fun"
           )
-          | Alias a -> search a e ctx
+          | Alias a -> search a e src
         ) else
-          search id e ctx
+          search id e src
       )
       | BottomVar (x, e) -> 
-        search id e ctx
+        search id e src
         (* failwith "inv_eval: BottomVar" *)
       in
     match e with
-    | BottomVar (x, e) -> search x e ctx
+    | BottomVar (x, e) -> search x e src
     | _ -> failwith "inv_eval: need a BottomVar"
 
   let eval e = 
@@ -371,12 +397,15 @@ let p10 =
       Plus (Var "x1", Plus (Var "x2", Var "x3"))))),
   App (App ((App (Var "add3", Int 1)), Int 2), Int 3))
 
-let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10]
+let p11 = 
+  Let ("p", Int 1, 
+    Let ("f", Fun ("x", Var "p"), 
+      Let ("p", Int 2, 
+        App (Var "f", Int 1))));;
+
+let ps = [p1; p2; p3; p4; p5; p6; p7; p8; p9; p10; p11]
 
 let ieval p = p |> anf_of_toy |> inv_of_anf |> Inverse_anf.eval
 
 ;;
 List.iter test ps;;
-
-
-#require "angstrom";;
