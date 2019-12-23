@@ -1,6 +1,7 @@
 #require "ppx_show.runtime";;
 
 type id = string
+[@@deriving show {with_path = false}]
 
 module Toy = struct
   type exp =
@@ -169,7 +170,7 @@ sig
   and value =
     | Int of int
     | Fun of id * exp * exp
-    | Lazi of id * exp * exp
+    | Lazi of id * exp
   [@@deriving show] 
 
   val eval : exp -> value
@@ -188,58 +189,62 @@ end
   and value =
     | Int of int
     | Fun of id * exp * exp
-    | Lazi of id * exp * exp
+    | Lazi of id * exp
     (* | HighFun of id * exp * exp * id * exp *)
   (* | Lazi of value lazy_t *)
   [@@deriving show {with_path = false}] 
 
-  let rec inv_eval e src =
-    let rec search id ew src =
-      (* Printf.printf "search %s at \n%s guarded \n%s"
-         id (show_exp ew) (show_exp ctx); *)
-      match ew with
-      | Top -> 
-        if src <> Top then
-          search id src Top
-        else
-          failwith ("search: undefined " ^ id)
-      | InvLet (x, c, e) -> (
+  let rec append e1 e2 =
+    match e1 with
+    | Top -> e2
+    | InvLet (x, c, e) -> InvLet (x, c, append e e2)
+    | BottomVar (x, e) -> BottomVar (x, append e e2)
+
+  let rec inv_eval e =
+    let rec search id e0 =
+      (* Printf.printf "search %s at \n%s\n"
+         id (show_exp ew); *)
+      match e0 with
+      | Top ->
+        failwith ("search: undefined " ^ id)
+      | InvLet (x, c, prev_e) -> (
           if id = x then (
             match c with
             | Value (Int i) -> Int i
-            | Value (Lazi (id, e, src)) -> search id e src
+            | Value (Lazi (id, e)) -> search id e
             | Plus (id1, id2) -> (
-                match search id1 e src, search id2 e src with
+                match search id1 prev_e, search id2 prev_e with
                 | Int i1 , Int i2 -> Int (i1 + i2)
                 | _ -> failwith "inv_eval: plus on non ints "
               ) 
-            | Value (Fun (x, ef, _)) -> Fun (x, ef, e)
+            | Value (Fun (x, ef, _)) -> Fun (x, ef, prev_e)
             | App (id1, id2) -> (
-                match search id1 e src with
-                | Fun (x, e, src_f) -> (
+                match search id1 e with
+                | Fun (xf, e, src_f) -> (
                     (* let v2 = lazy (let v2, _ = search id2 ew src in v2) in
                        let src_fbody = InvLet (x, Value (Lazi v2), src_f) in *)
-                    let src_fbody = InvLet (x, Value (Lazi (id2, ew, src)), src_f) in
-                    match inv_eval e src_fbody with
-                    | Fun (xa, ea, _) -> Fun (xa, ea, src_fbody)
-                    | rest -> rest
+                    let lazy_arg = InvLet (xf, Value (Lazi (id2, prev_e)), src_f) in
+                    let fbody_with_arg = append e lazy_arg in
+                    inv_eval fbody_with_arg
+                    (* match inv_eval extend_fbody with
+                       | Fun (xa, ea, _) -> Fun (xa, ea, extend_fbody)
+                       | rest -> rest *)
                   )
                 | _ -> failwith "inv_eval: app on non fun"
               )
-            | Alias a -> search a e src
+            | Alias a -> search a prev_e
           ) else
-            search id e src
+            search id prev_e
         )
       | BottomVar (x, e) -> 
-        search id e src
-        (* failwith "inv_eval: BottomVar" *)
+        search id e
     in
     match e with
-    | BottomVar (x, e) -> search x e src
+    | BottomVar (x, e) -> search x e
     | _ -> failwith "inv_eval: need a BottomVar"
 
   let eval e = 
-    inv_eval e Top
+    inv_eval e
 
   let int_of = function
     | Int i -> i
