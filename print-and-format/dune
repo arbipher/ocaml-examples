@@ -1,6 +1,12 @@
 (library
  (name print_and_format)
+ (modules lib magic)
  (synopsis "print_and_format demo")
  (libraries ppx_show.runtime)
  (inline_tests)
  (preprocess (staged_pps ppx_import ppx_expect ppx_show)))
+
+(executables
+  (names pp_eg1)
+  (modules pp_eg1)
+)

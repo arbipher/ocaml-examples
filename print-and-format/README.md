@@ -224,6 +224,11 @@ Toplevel must have a smart polymorphic `print_list`. How does it do?
 
 Check this later:
 https://stackoverflow.com/questions/7261248/how-can-ocaml-values-be-printed-outside-the-toplevel
+https://stackoverflow.com/questions/20037967/how-do-i-printf-a-map-in-ocaml
 
 _Surprisingly, structural printing is something that OCamlers rarely do._
 http://alan.petitepomme.net/cwn/2008.07.08.html#4
+
+http://gallium.inria.fr/~fpottier/pprint/
+
+https://github.com/clarus/smart-print
