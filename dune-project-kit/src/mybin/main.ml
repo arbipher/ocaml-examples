@@ -1,1 +1,1 @@
-let _ = print_endline @@ string_of_int Mylib.Lib.magic
+let _ = print_endline @@ string_of_int Lib.magic
