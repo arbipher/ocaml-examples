@@ -1,8 +1,8 @@
-(lang dune 2.5)
+(lang dune 2.7)
 (using menhir 2.0)
 ;(allow_approximate_merlin)
 (package
- (name phoenix2)
+ (name use-all-labs)
  (synopsis "My second Dune package!")
  (description "\| This is my second attempt at creating
               "\| a project with Dune.

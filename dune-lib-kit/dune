@@ -1,9 +1,12 @@
 (library
  (name lib)
 ;  (public_name phoenix_lib.lib)
-;  (wrapped false)
  (synopsis "the library demo")
  (inline_tests)
- ;  (preprocess (staged_pps ppx_import ppx_inline_test))
+ (libraries base sexplib)
  (preprocess
-  (pps ppx_expect)))
+  (pps ppx_jane)) 
+  )
+(env
+  (dev
+    (flags (:standard -w -33 -w -26))))
