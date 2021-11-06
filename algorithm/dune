@@ -1,0 +1,12 @@
+(library
+ (name algorithm)
+ (synopsis "the algorithm demo")
+ (libraries base fmt)
+ (inline_tests)
+ (preprocess
+  (pps ppx_compare ppx_jane)))
+
+(env
+ (dev
+  (flags
+   (:standard -w -32))))
