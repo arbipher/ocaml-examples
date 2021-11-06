@@ -1,7 +1,7 @@
 
 # Shiwei's OCaml demos
 
-A quick and dirty collection of demos.
+A quick-and-dirty collection of demos.
 
 Top directory are expected to work after copying to other places.
 
