@@ -1,0 +1,8 @@
+(library
+ (name lib)
+;  (public_name phoenix_lib.lib)
+ (synopsis "the library demo")
+ (libraries angstrom base stdio core)
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane)))
