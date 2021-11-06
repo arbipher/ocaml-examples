@@ -1,0 +1,16 @@
+(ocamllex
+  (modules lexer)
+)
+
+(menhir
+  (modules parser)
+  (flags ("-la" "2"))
+)
+
+(library
+  (name lazycat)
+  (libraries base fmt)
+  (inline_tests)
+  (preprocess (
+    pps ppx_expect ppx_jane ppx_js_style visitors.ppx))    
+)
