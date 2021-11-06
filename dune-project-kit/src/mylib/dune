@@ -5,4 +5,7 @@
  (synopsis "the library demo")
  (inline_tests)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane -allow-unannotated-ignores ppx_deriving.show)))
+(env
+  (dev
+    (flags (:standard -w -33 -w -26))))

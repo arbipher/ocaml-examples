@@ -1,7 +1,6 @@
-(lang dune 2.5)
+(lang dune 2.9)
+
 (package
  (name phoenix_lib)
  (synopsis "My first Dune package!")
- (description "\| This is my first attempt at creating
-              "\| a project with Dune.
-))
+ (description "This is my first attempt at creating\na project with Dune.\n"))

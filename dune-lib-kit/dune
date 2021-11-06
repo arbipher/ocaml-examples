@@ -3,9 +3,9 @@
 ;  (public_name phoenix_lib.lib)
  (synopsis "the library demo")
  (inline_tests)
- (libraries base sexplib)
+ (libraries base)
  (preprocess
-  (pps ppx_jane)) 
+  (pps ppx_jane -allow-unannotated-ignores ppx_deriving.show)) 
   )
 (env
   (dev
