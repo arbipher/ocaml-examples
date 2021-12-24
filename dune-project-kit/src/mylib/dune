@@ -1,6 +1,6 @@
 (library
  (name mylib)
- (public_name phoenix2.mylib)
+ (public_name phoenix.mylib)
  (wrapped false)
  (synopsis "the library demo")
  (inline_tests)

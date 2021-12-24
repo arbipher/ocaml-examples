@@ -5,7 +5,7 @@
  (inline_tests)
  (libraries base)
  (preprocess
-  (pps ppx_jane -allow-unannotated-ignores ppx_deriving.show)) 
+  (pps ppx_jane -allow-unannotated-ignores ppx_deriving.show ppx_inline_test ppx_expect)) 
   )
 (env
   (dev
