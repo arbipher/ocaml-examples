@@ -1,0 +1,7 @@
+(lang dune 2.9)
+(package
+ (name example_metapp)
+ (synopsis "My first Dune package!")
+ (description "\| This is my first attempt at creating
+              "\| a project with Dune.
+))
