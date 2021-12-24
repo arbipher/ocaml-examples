@@ -1,8 +1,9 @@
 (lang dune 2.9)
+
 (using menhir 2.0)
+
 (package
  (name phoenix)
  (synopsis "My second Dune package!")
- (description "\| This is my second attempt at creating
-              "\| a project with Dune.
-))
+ (description
+  "This is my second attempt at creating\na project with Dune.\n"))
