@@ -1,0 +1,5 @@
+(lang dune 2.9)
+(package
+ (name phoenix)
+ (synopsis "My first Dune package!")
+ (description "This is my first attempt at creating\na project with Dune.\n"))
