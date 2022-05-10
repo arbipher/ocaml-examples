@@ -21,4 +21,7 @@ uninstall:
 clean:
 	dune clean
 
-.PHONY: default build install uninstall test clean
+auto:
+	dune test --auto-promote
+
+.PHONY: default build install uninstall test clean auto

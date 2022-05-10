@@ -1,8 +1,8 @@
 (library
- (name lib)
+ (name nondeter)
  (synopsis "the library demo")
  (inline_tests)
- (libraries base)
+ (libraries base fmt)
  (preprocess
   (pps
    ppx_jane
