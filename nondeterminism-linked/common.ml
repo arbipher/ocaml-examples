@@ -24,6 +24,11 @@ end)
 
 let pp_int_set oc s = Fmt.(Dump.seq Fmt.int) oc (Int_set.to_seq s)
 
+let mutation deltas s =
+  Int_set.fold
+    (fun e s -> List.fold_left (fun s i -> Int_set.add (e + i) s) s deltas)
+    s s
+
 module Set_set = Set.Make (struct
   type t = Int_set.t
 

@@ -21,7 +21,10 @@ uninstall:
 clean:
 	dune clean
 
+ben:
+	dune exec bin/speed.exe
+
 auto:
 	dune test --auto-promote
 
-.PHONY: default build install uninstall test clean auto
+.PHONY: default build install uninstall test clean ben auto
