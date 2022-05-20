@@ -3,7 +3,6 @@
 (using menhir 2.0)
 
 (package
- (name phoenix)
- (synopsis "My second Dune package!")
- (description
-  "This is my second attempt at creating\na project with Dune.\n"))
+ (name fancy)
+ (synopsis "My Fancy OCaml Library!")
+ (description "I shall better \nwrite a better description."))
