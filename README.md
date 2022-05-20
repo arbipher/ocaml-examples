@@ -1,9 +1,9 @@
 
-# Shiwei's OCaml demos
+# Shiwei's OCaml snippets
 
-A quick-and-dirty collection of demos.
+A quick-and-dirty unpolished OCaml snippets.
 
-Top directory are expected to work after copying to other places.
+It's usually obsolete after realizing there is a better way to do the same thing.
 
 ## list
 
