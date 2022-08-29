@@ -1,0 +1,4 @@
+(tests
+ (names test)
+ (libraries alcotest mylib)
+ (action (run %{test} -e)))
