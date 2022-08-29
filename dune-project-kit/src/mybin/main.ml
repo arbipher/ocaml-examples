@@ -1,1 +1,0 @@
-let _ = print_endline @@ string_of_int Lib.magic

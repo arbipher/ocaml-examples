@@ -1,0 +1,1 @@
+include Foo_intf.Intf (** @inline *)
