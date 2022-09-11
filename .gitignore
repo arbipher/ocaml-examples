@@ -2,3 +2,7 @@ _build
 .merlin
 lab
 zarchive
+
+example-fix
+example-incremental
+higher-kinded-polymorphism

@@ -1,5 +1,0 @@
-(library
- (name lib)
- (synopsis "the library demo")
- (inline_tests)
- (preprocess (pps metapp.ppx ppx_inline_test ppx_expect)))
