@@ -3,7 +3,6 @@
 (library
  (name mylib)
  (public_name fancy.mylib)
- (wrapped false)
  (synopsis "the library demo")
  (inline_tests)
  (preprocess
