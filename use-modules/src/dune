@@ -1,0 +1,12 @@
+(library
+ (name mylib)
+ (public_name fancy.mylib)
+ (synopsis "the library demo")
+ (inline_tests)
+ (preprocess
+  (pps ppx_jane ppx_deriving.show)))
+
+(env
+ (dev
+  (flags
+   (:standard -w -33 -w -26))))
