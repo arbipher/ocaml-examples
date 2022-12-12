@@ -1,0 +1,10 @@
+(executables
+ (names
+  state_ref
+  option_effect
+  t1_try_with
+  t2_cont
+  t3_callstack
+  t4_get_value
+  t5_state)
+ (libraries lwte core))
