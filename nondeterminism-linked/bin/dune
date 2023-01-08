@@ -1,3 +1,0 @@
-(executables
- (names main speed)
- (libraries core core_bench nondeter))
