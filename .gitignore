@@ -1,8 +1,5 @@
 _build
+_opam
 .merlin
 lab
 zarchive
-
-example-fix
-example-incremental
-higher-kinded-polymorphism

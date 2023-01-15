@@ -1,8 +1,17 @@
-(lang dune 3.4)
+(lang dune 3.6)
 
 (using menhir 2.0)
+
+(generate_opam_files true)
+
+(authors "Shiwei Weng <shiwei@prover.me>")
+
+; (source
+;  (github arbipher/fancy))
 
 (package
  (name fancy)
  (synopsis "My Fancy OCaml Library!")
- (description "I shall better \nwrite a better description."))
+ (description "I shall better \nwrite a better description.")
+ (depends
+  (alcotest :with-test)))
