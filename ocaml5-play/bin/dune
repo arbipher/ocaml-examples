@@ -6,5 +6,6 @@
   t2_cont
   t3_callstack
   t4_get_value
-  t5_state)
+  t5_state
+  t6_shallow)
  (libraries lwte core))
