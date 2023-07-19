@@ -1,0 +1,11 @@
+(lang dune 3.9)
+
+(maintainers "Shiwei Weng <shiwei@prover.me>")
+
+(generate_opam_files true)
+
+(package
+ (name leak)
+ (synopsis "Almost OCaml Stdlib")
+ (description
+  "Almost OCaml Stdlib Format, with the expose of the concrete type for formatter for dumping state"))

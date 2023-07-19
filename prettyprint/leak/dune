@@ -1,0 +1,8 @@
+(library
+ (name leak)
+ (public_name leak))
+
+(env
+ (dev
+  (flags
+   (:standard -w -33 -w -26))))
