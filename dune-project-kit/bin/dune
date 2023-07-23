@@ -1,3 +1,6 @@
 (executable
  (name main)
- (libraries mylib))
+ (libraries mylib)
+ (promote
+  (until-clean)
+  (into "..")))

@@ -1,14 +1,9 @@
 (ocamllex
-  (modules lexer)
-)
+ (modules lexer))
 
 (menhir
-  (flags --explain)
-  (modules
-    parser
-  )
-)
+ (flags --explain)
+ (modules parser))
 
 (executable
-  (name calc)
-)
+ (name calc))
