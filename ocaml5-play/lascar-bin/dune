@@ -1,0 +1,5 @@
+(executables
+ (names ss)
+ (libraries fmt core lascar ppx_show.runtime)
+ (preprocess
+  (pps ppx_deriving.show)))
