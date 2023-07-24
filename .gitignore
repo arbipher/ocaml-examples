@@ -1,5 +1,6 @@
 _build
 _opam
 .merlin
-lab
-zarchive
+_draft
+*.exe
+.vscode
