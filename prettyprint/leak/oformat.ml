@@ -939,6 +939,7 @@ let pp_make_buffer () = Buffer.create pp_buffer_size
 
 (* The standard (shared) buffer. *)
 let stdbuf = pp_make_buffer ()
+(* let errbuf = pp_make_buffer () *)
 
 (* Predefined formatters standard formatter to print
    to [Stdlib.stdout], [Stdlib.stderr], and {!stdbuf}. *)
@@ -947,30 +948,61 @@ and err_formatter = formatter_of_out_channel Stdlib.stderr
 and str_formatter = formatter_of_buffer stdbuf
 
 (* Initialise domain local state *)
-module DLS = Domain.DLS
+(* module DLS = Domain.DLS *)
 
-let stdbuf_key = DLS.new_key pp_make_buffer
+type dls_fmter_key = 
+| Key_std_fmter
+| Key_err_fmter
+| Key_str_fmter
+
+type dls_buf_key =
+| Key_std_buf
+(* | Key_err_buf *)
+
+let std_buf_key = Key_std_buf
+(* let err_buf_key = Key_err_buf *)
+let std_formatter_key = Key_std_fmter
+let err_formatter_key = Key_err_fmter
+let str_formatter_key = Key_str_fmter
+
+let stdbuf_key = std_buf_key
+module DLS = struct
+  (* let new_key f = ()
+    let set k v = () *)
+
+  let get_buf = function
+  | Key_std_buf -> stdbuf
+  (* | Key_err_buf -> errbuf *)
+
+  let get = function
+  | Key_std_fmter -> std_formatter
+  | Key_err_fmter -> err_formatter
+  | Key_str_fmter -> str_formatter
+
+end
+
+(* let stdbuf_key = DLS.new_key pp_make_buffer
 let _ = DLS.set stdbuf_key stdbuf
 
 let str_formatter_key =
   DLS.new_key (fun () -> formatter_of_buffer (DLS.get stdbuf_key))
 
-let _ = DLS.set str_formatter_key str_formatter
+let _ = DLS.set str_formatter_key str_formatter *)
 
-let buffered_out_string key str ofs len =
-  Buffer.add_substring (Domain.DLS.get key) str ofs len
+(* let buffered_out_string key str ofs len =
+  Buffer.add_substring (DLS.get_buf key) str ofs len *)
 
-let buffered_out_flush oc key () =
-  let buf = Domain.DLS.get key in
+(* let buffered_out_flush oc key () =
+  let buf = DLS.get_buf key in
   let len = Buffer.length buf in
   let str = Buffer.contents buf in
   output_substring oc str 0 len ;
   Stdlib.flush oc ;
-  Buffer.clear buf
+  Buffer.clear buf *)
 
-let std_buf_key = Domain.DLS.new_key (fun () -> Buffer.create pp_buffer_size)
-let err_buf_key = Domain.DLS.new_key (fun () -> Buffer.create pp_buffer_size)
-
+(* let std_buf_key = DLS.new_key (fun () -> Buffer.create pp_buffer_size)
+let err_buf_key = DLS.new_key (fun () -> Buffer.create pp_buffer_size) *)
+(* 
 let std_formatter_key =
   DLS.new_key (fun () ->
       let ppf =
@@ -1001,11 +1033,11 @@ let err_formatter_key =
       Domain.at_exit (pp_print_flush ppf) ;
       ppf)
 
-let _ = DLS.set err_formatter_key err_formatter
+let _ = DLS.set err_formatter_key err_formatter *)
 let get_std_formatter () = DLS.get std_formatter_key
 let get_err_formatter () = DLS.get err_formatter_key
 let get_str_formatter () = DLS.get str_formatter_key
-let get_stdbuf () = DLS.get stdbuf_key
+let get_stdbuf () = DLS.get_buf stdbuf_key
 
 (* [flush_buffer_formatter buf ppf] flushes formatter [ppf],
    then returns the contents of buffer [buf] that is reset.
@@ -1019,10 +1051,10 @@ let flush_buffer_formatter buf ppf =
 
 (* Flush [str_formatter] and get the contents of [stdbuf]. *)
 let flush_str_formatter () =
-  let stdbuf = DLS.get stdbuf_key in
+  let stdbuf = DLS.get_buf stdbuf_key in
   let str_formatter = DLS.get str_formatter_key in
   flush_buffer_formatter stdbuf str_formatter
-
+(* 
 let make_synchronized_formatter output flush =
   DLS.new_key (fun () ->
       let buf = Buffer.create pp_buffer_size in
@@ -1035,7 +1067,7 @@ let make_synchronized_formatter output flush =
       make_formatter output' flush')
 
 let synchronized_formatter_of_out_channel oc =
-  make_synchronized_formatter (output_substring oc) (fun () -> flush oc)
+  make_synchronized_formatter (output_substring oc) (fun () -> flush oc) *)
 
 (*
   Symbolic pretty-printing
@@ -1409,7 +1441,7 @@ let flush_standard_formatters () =
   pp_print_flush (DLS.get err_formatter_key) ()
 
 let () = at_exit flush_standard_formatters
-
+(* 
 let () =
   Domain.before_first_spawn (fun () ->
       flush_standard_formatters () ;
@@ -1427,4 +1459,4 @@ let () =
           fs with
           out_string = buffered_out_string err_buf_key;
           out_flush = buffered_out_flush Stdlib.stderr err_buf_key;
-        })
+        }) *)

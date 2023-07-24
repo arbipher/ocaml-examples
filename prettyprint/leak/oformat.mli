@@ -1047,9 +1047,9 @@ val formatter_of_out_channel : out_channel -> formatter
 (** [formatter_of_out_channel oc] returns a new formatter writing to the
     corresponding output channel [oc]. *)
 
-val synchronized_formatter_of_out_channel :
+(* val synchronized_formatter_of_out_channel :
   out_channel -> formatter Domain.DLS.key
-  [@@alert unstable] [@@alert "-unstable"]
+  [@@alert unstable] [@@alert "-unstable"] *)
 (** [synchronized_formatter_of_out_channel oc] returns the key to the
     domain-local state that holds the domain-local formatter for writing to the
     corresponding output channel [oc].
@@ -1123,9 +1123,9 @@ val make_formatter :
 
     returns a formatter to the {!Stdlib.out_channel} [oc]. *)
 
-val make_synchronized_formatter :
+(* val make_synchronized_formatter :
   (string -> int -> int -> unit) -> (unit -> unit) -> formatter Domain.DLS.key
-  [@@alert unstable] [@@alert "-unstable"]
+  [@@alert unstable] [@@alert "-unstable"] *)
 (** [make_synchronized_formatter out flush] returns the key to the domain-local
     state that holds the domain-local formatter that outputs with function
     [out], and flushes with function [flush].

@@ -1,5 +1,8 @@
 default: build
 
+p:
+	dune test --auto-promote
+
 run:
 	dune exec bin/main.exe
 

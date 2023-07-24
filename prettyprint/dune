@@ -3,6 +3,7 @@
  (public_name fancy.mylib)
  (wrapped false)
  (synopsis "the library demo")
+ (libraries fmt)
  (inline_tests)
  (preprocess
   (pps ppx_jane ppx_deriving.show)))

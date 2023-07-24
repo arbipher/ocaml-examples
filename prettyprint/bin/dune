@@ -1,3 +1,3 @@
 (executables
- (names main demo sp)
+ (names main demo sp sp2)
  (libraries fmt mylib leak))
