@@ -1,3 +1,8 @@
 (executables
  (names main demo sp sp2)
  (libraries fmt mylib leak))
+
+(env
+ (dev
+  (flags
+   (:standard -w -32))))
