@@ -1,5 +1,5 @@
 (executables
- (names main demo sp sp2)
+ (names main demo sp sp2 sp3)
  (libraries fmt mylib leak))
 
 (env
