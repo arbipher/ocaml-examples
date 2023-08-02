@@ -1,5 +1,7 @@
+(include_subdirs qualified)
+
 (executables
- (names main demo sp sp2 sp3)
+ (names main demo sp sp2 past)
  (libraries fmt mylib leak))
 
 (env
