@@ -1,5 +1,13 @@
 default: build
 
+d:
+	dune exec ./bin/past1.exe | tee result1.txt
+	dune exec ./bin/past2.exe | tee result2.txt
+	diff result1.txt result2.txt
+
+d2: 
+	dune exec ./bin/past2.exe | tee result2.txt
+
 p:
 	dune test --auto-promote
 
